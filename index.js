@@ -53,8 +53,8 @@ const EMOJIS = {
 
 const CATEGORIES = {
   comprar: {
-    label: "Comprar",
-    description: "Quero contratar um serviço da Red Jhon.",
+    label: "Comprar otimização",
+    description: "Quero contratar uma otimização para o meu PC.",
     channelPrefix: "compra"
   },
   duvida: {
@@ -101,8 +101,16 @@ app.get("/health", (req, res) => {
   });
 });
 
-app.listen(process.env.PORT || 3000, "0.0.0.0", () => {
-  console.log("Servidor HTTP iniciado!");
+const server = app.listen(
+  process.env.PORT || 3000,
+  "0.0.0.0",
+  () => {
+    console.log("Servidor HTTP iniciado!");
+  }
+);
+
+server.on("error", (error) => {
+  console.error("Erro no servidor HTTP:", error);
 });
 
 // ================ PAINEL /PAINEL ================
@@ -113,24 +121,26 @@ function createPanelEmbed() {
   return new EmbedBuilder()
     .setColor(PURPLE)
     .setTitle("🎫 SUPORTE | RED JHON OTIMIZAÇÕES")
-    .setDescription([
-      "Bem-vindo à **Red Jhon Otimizações**!",
-      "",
-      "Selecione abaixo a opção que corresponde ao seu atendimento.",
-      "",
-      "━━━━━━━━━━━━━━━━━━━━",
-      "",
-      "❓ **DÚVIDAS**",
-      "Tem perguntas sobre nossos serviços?",
-      "",
-      "💬 **OUTROS ASSUNTOS**",
-      "Precisa de ajuda com outra questão?",
-      "",
-      "━━━━━━━━━━━━━━━━━━━━",
-      "",
-      "🔒 Seus tickets são privados.",
-      "Nossa equipe responderá assim que possível."
-    ].join("\n"))
+    .setDescription(
+      [
+        "Bem-vindo à **Red Jhon Otimizações**!",
+        "",
+        "Selecione abaixo a opção que corresponde ao seu atendimento.",
+        "",
+        "━━━━━━━━━━━━━━━━━━━━",
+        "",
+        "❓ **DÚVIDAS**",
+        "Tem perguntas sobre nossos serviços?",
+        "",
+        "💬 **OUTROS ASSUNTOS**",
+        "Precisa de ajuda com outra questão?",
+        "",
+        "━━━━━━━━━━━━━━━━━━━━",
+        "",
+        "🔒 Seus tickets são privados.",
+        "Nossa equipe responderá assim que possível."
+      ].join("\n")
+    )
     .setFooter({
       text: "Red Jhon Otimizações • Central de Atendimento"
     })
@@ -163,13 +173,23 @@ function createPurchasePanelEmbed() {
   return new EmbedBuilder()
     .setColor(PURPLE)
     .setTitle("🛒 COMPRAR")
-    .setDescription([
-      "Quer contratar um serviço da **Red Jhon Otimizações**?",
-      "",
-      "Clique no botão **Comprar** abaixo para abrir seu atendimento privado.",
-      "",
-      "Nossa equipe vai te orientar por lá."
-    ].join("\n"))
+    .setDescription(
+      [
+        "🚀 **BEM-VINDO À RED JHON OTIMIZAÇÕES!**",
+        "",
+        "Quer melhorar o desempenho do seu PC e ter uma experiência mais fluida nos seus jogos? Você está no lugar certo!",
+        "",
+        "🖥️ Nossa equipe vai entender o que você precisa, tirar suas dúvidas e explicar as opções disponíveis para o seu computador.",
+        "",
+        "⚙️ Cada computador tem suas próprias características. Por isso, nosso atendimento serve para entender sua configuração e orientar você sobre as opções adequadas.",
+        "",
+        "📩 Para começar, clique no botão **Comprar** abaixo e abra seu atendimento privado com a nossa equipe.",
+        "",
+        "🔒 O atendimento é privado. Envie as informações necessárias por lá e aguarde nossa equipe responder.",
+        "",
+        "💜 **Red Jhon Otimizações — atendimento direto, atenção ao seu PC e orientação personalizada.**"
+      ].join("\n")
+    )
     .setImage(PURCHASE_IMAGE_URL)
     .setFooter({
       text: "Red Jhon Otimizações • Atendimento privado"
@@ -192,7 +212,7 @@ function createPurchasePanelButtons() {
 const commands = [
   new SlashCommandBuilder()
     .setName("painel")
-    .setDescription("Publica o painel de atendimento.")
+    .setDescription("Publica o painel de atendimento da Red Jhon.")
     .setDefaultMemberPermissions(
       PermissionFlagsBits.Administrator
     )
@@ -200,7 +220,7 @@ const commands = [
 
   new SlashCommandBuilder()
     .setName("painel12")
-    .setDescription("Publica o painel de compra.")
+    .setDescription("Publica o painel de compra da Red Jhon.")
     .setDefaultMemberPermissions(
       PermissionFlagsBits.Administrator
     )
@@ -244,10 +264,14 @@ client.on(Events.GuildMemberAdd, async (member) => {
       `Salve, ${member}! Seja bem-vindo à **Red Jhon Otimizações**!`
     )
     .setThumbnail(member.user.displayAvatarURL())
-    .setFooter({ text: "Red Jhon Otimizações" })
+    .setFooter({
+      text: "Red Jhon Otimizações"
+    })
     .setTimestamp();
 
-  await channel.send({ embeds: [embed] }).catch(console.error);
+  await channel.send({
+    embeds: [embed]
+  }).catch(console.error);
 });
 
 // ================ PERMISSÕES ================
@@ -304,7 +328,9 @@ async function createTranscript(channel) {
       message.embeds.length
         ? `[${message.embeds.length} embed(s)]`
         : ""
-    ].filter(Boolean).join("\n");
+    ]
+      .filter(Boolean)
+      .join("\n");
   });
 
   const transcript = [
@@ -444,7 +470,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
         });
       }
 
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({
+        ephemeral: true
+      });
 
       try {
         await channel.setName(
@@ -466,7 +494,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     if (!interaction.isButton()) return;
 
-    // FECHAR TICKET E ENVIAR TRANSCRIPT
+    // RESOLVER TICKET E ENVIAR TRANSCRIPT
 
     if (interaction.customId === "ticket_resolvido") {
       if (!isAuthorized(interaction.member)) {
@@ -485,7 +513,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
         });
       }
 
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({
+        ephemeral: true
+      });
 
       const logChannel = await client.channels
         .fetch(LOG_CHANNEL_ID)
@@ -499,7 +529,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       try {
         const ownerId = channel.topic.slice("ticket:".length);
-        const { messages, buffer } = await createTranscript(channel);
+
+        const {
+          messages,
+          buffer
+        } = await createTranscript(channel);
 
         const attachment = new AttachmentBuilder(buffer, {
           name: `transcript-${channel.name}.txt`
@@ -508,14 +542,16 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const summary = new EmbedBuilder()
           .setColor(PURPLE)
           .setTitle("📁 Ticket resolvido")
-          .setDescription([
-            `**Canal:** #${channel.name}`,
-            `**Cliente:** <@${ownerId}>`,
-            `**Resolvido por:** ${interaction.user}`,
-            `**Mensagens registradas:** ${messages.length}`,
-            "",
-            "O transcript completo está anexado para download."
-          ].join("\n"))
+          .setDescription(
+            [
+              `**Canal:** #${channel.name}`,
+              `**Cliente:** <@${ownerId}>`,
+              `**Resolvido por:** ${interaction.user}`,
+              `**Mensagens registradas:** ${messages.length}`,
+              "",
+              "O transcript completo está anexado para download."
+            ].join("\n")
+          )
           .setFooter({
             text: "Red Jhon Otimizações • Logs de atendimento"
           })
@@ -545,14 +581,16 @@ client.on(Events.InteractionCreate, async (interaction) => {
       return;
     }
 
-    // CRIAR TICKETS DOS DOIS PAINÉIS
+    // CRIAR TICKET PELOS DOIS PAINÉIS
 
     if (
       interaction.customId === "ticket_comprar" ||
       interaction.customId === "ticket_duvida" ||
       interaction.customId === "ticket_outros"
     ) {
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({
+        ephemeral: true
+      });
 
       const categoryKey = interaction.customId.slice("ticket_".length);
       const category = CATEGORIES[categoryKey];
@@ -562,7 +600,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         return interaction.editReply("Categoria inválida.");
       }
 
-      // Impede que o usuário abra mais de um ticket.
+      // Impede mais de um ticket aberto por usuário.
 
       const channels = await guild.channels.fetch();
 
@@ -583,7 +621,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
       const overwrites = [
         {
           id: guild.roles.everyone.id,
-          deny: [PermissionFlagsBits.ViewChannel]
+          deny: [
+            PermissionFlagsBits.ViewChannel
+          ]
         },
         {
           id: interaction.user.id,
@@ -607,7 +647,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         }
       ];
 
-      // Os mesmos três cargos autorizados nos dois painéis.
+      // Os mesmos três cargos autorizados.
 
       for (const roleId of STAFF_ROLE_IDS) {
         overwrites.push({
@@ -639,14 +679,16 @@ client.on(Events.InteractionCreate, async (interaction) => {
       const embed = new EmbedBuilder()
         .setColor(PURPLE)
         .setTitle(category.label)
-        .setDescription([
-          `Olá, ${interaction.user}!`,
-          "",
-          category.description,
-          "",
-          "Explique seu pedido nesta conversa.",
-          "A equipe da Red Jhon vai te atender assim que possível."
-        ].join("\n"))
+        .setDescription(
+          [
+            `Olá, ${interaction.user}!`,
+            "",
+            category.description,
+            "",
+            "Explique seu pedido nesta conversa.",
+            "A equipe da Red Jhon vai te atender assim que possível."
+          ].join("\n")
+        )
         .addFields(
           {
             name: "Cliente",
@@ -709,21 +751,77 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
-// ================ TRATAMENTO DE ERROS ================
+// ================ ESTABILIDADE E RECONEXÃO ================
 
 client.on("error", (error) => {
   console.error("Erro do Discord:", error);
 });
 
-client.on("shardError", (error) => {
-  console.error("Erro na conexão do Discord:", error);
+// O discord.js tenta reconectar automaticamente quando a conexão
+// com o Gateway é interrompida.
+
+client.on(Events.ShardDisconnect, (event, shardId) => {
+  console.warn(
+    `Shard ${shardId} desconectado. Código: ${event?.code ?? "desconhecido"}.`
+  );
 });
 
-process.on("unhandledRejection", (error) => {
-  console.error("Promise rejeitada:", error);
+client.on(Events.ShardReconnecting, (shardId) => {
+  console.warn(`Reconectando shard ${shardId}...`);
 });
+
+client.on(Events.ShardResume, (shardId, replayedEvents) => {
+  console.log(
+    `Shard ${shardId} reconectado. Eventos recuperados: ${replayedEvents}.`
+  );
+});
+
+client.on(Events.ShardError, (error, shardId) => {
+  console.error(`Erro no shard ${shardId}:`, error);
+});
+
+// Registra falhas assíncronas para facilitar o diagnóstico.
+
+process.on("unhandledRejection", (reason) => {
+  console.error("Promise rejeitada sem tratamento:", reason);
+});
+
+// Uma exceção não capturada pode deixar o processo em estado inseguro.
+// Encerra o processo para que a plataforma possa reiniciar o serviço.
+
+process.on("uncaughtException", (error) => {
+  console.error(
+    "Exceção não capturada; encerrando para reinicialização:",
+    error
+  );
+
+  process.exit(1);
+});
+
+// Encerramento organizado quando a plataforma parar ou reiniciar o serviço.
+
+function gracefulShutdown(signal) {
+  console.log(`${signal} recebido. Encerrando o bot...`);
+
+  client.destroy();
+
+  server.close(() => {
+    console.log("Servidor HTTP encerrado.");
+    process.exit(0);
+  });
+
+  // Evita ficar preso no encerramento se houver conexões pendentes.
+  setTimeout(() => {
+    process.exit(0);
+  }, 10000).unref();
+}
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+
+// ================ LOGIN ================
 
 client.login(TOKEN).catch((error) => {
   console.error("Falha ao conectar ao Discord:", error);
-  process.exitCode = 1;
+  process.exit(1);
 });
