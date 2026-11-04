@@ -20,7 +20,7 @@ const {
 
 const express = require("express");
 
-// ================= CONFIGURAÇÕES =================
+// ================ CONFIGURAÇÕES ================
 
 const TOKEN = process.env.DISCORD_TOKEN;
 const CLIENT_ID = process.env.CLIENT_ID;
@@ -76,7 +76,7 @@ if (!TOKEN || !CLIENT_ID || !GUILD_ID) {
   );
 }
 
-// ================= CLIENTE =================
+// ================ CLIENTE DISCORD ================
 
 const client = new Client({
   intents: [
@@ -87,7 +87,7 @@ const client = new Client({
   ]
 });
 
-// ================= SERVIDOR WEB RENDER =================
+// ================ SERVIDOR WEB ================
 
 const app = express();
 
@@ -106,8 +106,8 @@ app.listen(process.env.PORT || 3000, "0.0.0.0", () => {
   console.log("Servidor HTTP iniciado!");
 });
 
-// ================= PAINEL ORIGINAL =================
-// Não alterar o visual do painel.
+// ================ PAINEL ORIGINAL ================
+// Mantido sem alterações no visual.
 
 function createPanelEmbed() {
   return new EmbedBuilder()
@@ -115,7 +115,7 @@ function createPanelEmbed() {
     .setTitle("🎫 SUPORTE | RED JHON OTIMIZAÇÕES")
     .setDescription(
       [
-        "Bem-vindo ao atendimento da **Red Jhon Otimizações**!",
+        "Bem-vindo à **Red Jhon Otimizações**!",
         "",
         "Selecione abaixo a opção que corresponde ao seu atendimento.",
         "",
@@ -164,7 +164,7 @@ function createPanelButtons() {
   );
 }
 
-// ================= COMANDO =================
+// ================ COMANDO ================
 
 const commands = [
   new SlashCommandBuilder()
@@ -174,7 +174,7 @@ const commands = [
     .toJSON()
 ];
 
-// ================= INICIALIZAÇÃO =================
+// ================ INICIALIZAÇÃO ================
 
 client.once(Events.ClientReady, async (bot) => {
   console.log(`Red Jhon conectado como ${bot.user.tag}`);
@@ -186,14 +186,13 @@ client.once(Events.ClientReady, async (bot) => {
       Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
       { body: commands }
     );
-
     console.log("Comando /painel registrado!");
   } catch (error) {
     console.error("Erro ao registrar comandos:", error);
   }
 });
 
-// ================= BOAS-VINDAS =================
+// ================ BOAS-VINDAS ================
 
 client.on(Events.GuildMemberAdd, async (member) => {
   if (!WELCOME_CHANNEL_ID) return;
@@ -217,7 +216,7 @@ client.on(Events.GuildMemberAdd, async (member) => {
   await channel.send({ embeds: [embed] }).catch(console.error);
 });
 
-// ================= PERMISSÕES =================
+// ================ PERMISSÕES ================
 
 function isAuthorized(member) {
   return STAFF_ROLE_IDS.some((roleId) =>
@@ -233,13 +232,12 @@ function isTicket(channel) {
   );
 }
 
-// ================= TRANSCRIPT =================
+// ================ TRANSCRIPT ================
 
 async function createTranscript(channel) {
   const messages = [];
   let before;
 
-  // Lê até 5.000 mensagens em lotes de 100.
   for (let page = 0; page < 50; page++) {
     const batch = await channel.messages.fetch({
       limit: 100,
@@ -261,21 +259,17 @@ async function createTranscript(channel) {
       timeZone: "America/Bahia"
     });
 
-    const content = message.content || "[Mensagem sem texto]";
-
     const attachments = [...message.attachments.values()]
       .map((file) => `Anexo: ${file.url}`)
       .join("\n");
 
-    const embeds = message.embeds.length
-      ? `[${message.embeds.length} embed(s)]`
-      : "";
-
     return [
       `[${time}] ${message.author.tag} (${message.author.id})`,
-      content,
+      message.content || "[Mensagem sem texto]",
       attachments,
-      embeds
+      message.embeds.length
+        ? `[${message.embeds.length} embed(s)]`
+        : ""
     ].filter(Boolean).join("\n");
   });
 
@@ -295,11 +289,11 @@ async function createTranscript(channel) {
   };
 }
 
-// ================= INTERAÇÕES =================
+// ================ INTERAÇÕES ================
 
 client.on(Events.InteractionCreate, async (interaction) => {
   try {
-    // ---------- COMANDO /PAINEL ----------
+    // COMANDO /PAINEL
 
     if (
       interaction.isChatInputCommand() &&
@@ -318,8 +312,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       return;
     }
 
-    // ---------- ABRIR FORMULÁRIO DE RENOMEAÇÃO ----------
-    // Deve ficar antes da lógica de criação de tickets.
+    // BOTÃO RENOMEAR: TRATADO ANTES DAS CATEGORIAS
 
     if (
       interaction.isButton() &&
@@ -359,7 +352,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       return interaction.showModal(modal);
     }
 
-    // ---------- RECEBER O FORMULÁRIO ----------
+    // FORMULÁRIO ENVIADO
 
     if (
       interaction.isModalSubmit() &&
@@ -403,46 +396,125 @@ client.on(Events.InteractionCreate, async (interaction) => {
       try {
         await channel.setName(
           novoNome,
-          `Ticket renomeado por ${interaction.user.tag}`
+          `Renomeado por ${interaction.user.tag}`
         );
 
         return interaction.editReply(
           `✅ Canal renomeado para **#${novoNome}**.`
         );
       } catch (error) {
-        console.error("Erro ao renomear canal:", error);
+        console.error("Erro ao renomear:", error);
 
         return interaction.editReply(
-          "Não consegui renomear. Confere se o bot tem a permissão Gerenciar Canais."
+          "Não consegui renomear. Verifica se o bot tem Gerenciar Canais."
         );
       }
     }
 
     if (!interaction.isButton()) return;
 
-    // ---------- CRIAR TICKET ----------
+    // RESOLVIDO É TRATADO ANTES DAS CATEGORIAS.
+    // Isso corrige o erro "Categoria inválida".
 
-    if (interaction.customId.startsWith("ticket_")) {
+    if (interaction.customId === "ticket_resolvido") {
+      if (!isAuthorized(interaction.member)) {
+        return interaction.reply({
+          content: "Somente os cargos autorizados podem resolver tickets.",
+          ephemeral: true
+        });
+      }
+
+      const channel = interaction.channel;
+
+      if (!isTicket(channel)) {
+        return interaction.reply({
+          content: "Este canal não é um ticket válido.",
+          ephemeral: true
+        });
+      }
+
+      await interaction.deferReply({ ephemeral: true });
+
+      const logChannel = await client.channels
+        .fetch(LOG_CHANNEL_ID)
+        .catch(() => null);
+
+      if (!logChannel?.isTextBased() || !logChannel.send) {
+        return interaction.editReply(
+          "Canal de logs não encontrado. Verifica o ID e as permissões."
+        );
+      }
+
+      try {
+        const ownerId = channel.topic.slice("ticket:".length);
+        const { messages, buffer } = await createTranscript(channel);
+
+        const attachment = new AttachmentBuilder(buffer, {
+          name: `transcript-${channel.name}.txt`
+        });
+
+        const summary = new EmbedBuilder()
+          .setColor(PURPLE)
+          .setTitle("📁 Ticket resolvido")
+          .setDescription(
+            [
+              `**Canal:** #${channel.name}`,
+              `**Cliente:** <@${ownerId}>`,
+              `**Resolvido por:** ${interaction.user}`,
+              `**Mensagens registradas:** ${messages.length}`,
+              "",
+              "O transcript completo está anexado para download."
+            ].join("\n")
+          )
+          .setFooter({
+            text: "Red Jhon Otimizações • Logs de atendimento"
+          })
+          .setTimestamp();
+
+        await logChannel.send({
+          embeds: [summary],
+          files: [attachment]
+        });
+
+        await interaction.editReply(
+          "✅ Ticket resolvido! Transcript enviado aos logs. Canal será excluído em 5 segundos."
+        );
+
+        setTimeout(() => {
+          channel.delete("Ticket resolvido pela equipe")
+            .catch(console.error);
+        }, 5000);
+      } catch (error) {
+        console.error("Erro ao resolver ticket:", error);
+
+        await interaction.editReply(
+          "Não consegui concluir o fechamento. Verifica os logs do Render."
+        );
+      }
+
+      return;
+    }
+
+    // CRIAR TICKET: SOMENTE AS TRÊS CATEGORIAS ABAIXO
+
+    if (
+      interaction.customId === "ticket_comprar" ||
+      interaction.customId === "ticket_duvida" ||
+      interaction.customId === "ticket_outros"
+    ) {
       await interaction.deferReply({ ephemeral: true });
 
       const categoryKey = interaction.customId.slice("ticket_".length);
       const category = CATEGORIES[categoryKey];
+      const guild = interaction.guild;
 
-      if (!category) {
+      if (!category || !guild) {
         return interaction.editReply("Categoria inválida.");
       }
 
-      const guild = interaction.guild;
+      const channels = await guild.channels.fetch();
 
-      if (!guild) {
-        return interaction.editReply(
-          "Este botão só funciona dentro do servidor."
-        );
-      }
-
-      const existingChannels = await guild.channels.fetch();
-
-      const existing = existingChannels.find(
+      const existing = channels.find(
         (channel) =>
           channel?.type === ChannelType.GuildText &&
           channel.topic === `ticket:${interaction.user.id}`
@@ -536,7 +608,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
         })
         .setTimestamp();
 
-      // Resolvido primeiro; renomear segundo.
       const ticketButtons = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId("ticket_resolvido")
@@ -564,88 +635,16 @@ client.on(Events.InteractionCreate, async (interaction) => {
         `Teu ticket foi criado: ${channel}`
       );
     }
-
-    // ---------- RESOLVER E FECHAR TICKET ----------
-
-    if (interaction.customId === "ticket_resolvido") {
-      if (!isAuthorized(interaction.member)) {
-        return interaction.reply({
-          content: "Somente os cargos autorizados podem resolver tickets.",
-          ephemeral: true
-        });
-      }
-
-      const channel = interaction.channel;
-
-      if (!isTicket(channel)) {
-        return interaction.reply({
-          content: "Este canal não é um ticket válido.",
-          ephemeral: true
-        });
-      }
-
-      await interaction.deferReply({ ephemeral: true });
-
-      const logChannel = await client.channels
-        .fetch(LOG_CHANNEL_ID)
-        .catch(() => null);
-
-      if (!logChannel?.isTextBased() || !logChannel.send) {
-        return interaction.editReply(
-          "Não encontrei o canal de logs. Confere o ID e as permissões do bot."
-        );
-      }
-
-      const ownerId = channel.topic.slice("ticket:".length);
-
-      const { messages, buffer } = await createTranscript(channel);
-
-      const attachment = new AttachmentBuilder(buffer, {
-        name: `transcript-${channel.name}.txt`
-      });
-
-      const summary = new EmbedBuilder()
-        .setColor(PURPLE)
-        .setTitle("📁 Ticket resolvido")
-        .setDescription(
-          [
-            `**Canal:** #${channel.name}`,
-            `**Cliente:** <@${ownerId}>`,
-            `**Resolvido por:** ${interaction.user}`,
-            `**Mensagens registradas:** ${messages.length}`,
-            "",
-            "O transcript completo está anexado para download."
-          ].join("\n")
-        )
-        .setFooter({
-          text: "Red Jhon Otimizações • Logs de atendimento"
-        })
-        .setTimestamp();
-
-      await logChannel.send({
-        embeds: [summary],
-        files: [attachment]
-      });
-
-      await interaction.editReply(
-        "✅ Ticket resolvido! Transcript enviado aos logs. O canal será excluído em 5 segundos."
-      );
-
-      setTimeout(async () => {
-        await channel.delete("Ticket resolvido pela equipe")
-          .catch(console.error);
-      }, 5000);
-    }
   } catch (error) {
     console.error("Erro na interação:", error);
 
     if (interaction.deferred) {
       await interaction.editReply(
-        "Ocorreu um erro. Confere os logs do bot."
+        "Ocorreu um erro. Confere os logs do bot no Render."
       ).catch(() => {});
     } else if (!interaction.replied) {
       await interaction.reply({
-        content: "Ocorreu um erro. Confere os logs do bot.",
+        content: "Ocorreu um erro. Confere os logs do bot no Render.",
         ephemeral: true
       }).catch(() => {});
     }
