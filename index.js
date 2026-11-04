@@ -304,7 +304,7 @@ client.on(Events.GuildMemberAdd, async (member) => {
         "",
         "**RED JHON OTIMIZAÇÕES**",
         "Mais desempenho. Menos travamentos. Mais gameplay."
-      ].join("\\n")
+      ].join("\n")
     )
     .setThumbnail(member.user.displayAvatarURL())
     .setFooter({
