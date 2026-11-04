@@ -55,20 +55,17 @@ const EMOJIS = {
 const CATEGORIES = {
   comprar: {
     label: "Comprar otimização",
-    description:
-      "Quero contratar uma otimização para o meu PC.",
+    description: "Quero contratar uma otimização para o meu PC.",
     channelPrefix: "compra"
   },
   duvida: {
     label: "Dúvidas",
-    description:
-      "Tenho dúvidas sobre os serviços e otimizações.",
+    description: "Tenho dúvidas sobre os serviços e otimizações.",
     channelPrefix: "duvida"
   },
   outros: {
     label: "Outros assuntos",
-    description:
-      "Preciso de ajuda com outro assunto.",
+    description: "Preciso de ajuda com outro assunto.",
     channelPrefix: "outros"
   }
 };
@@ -79,7 +76,7 @@ if (!TOKEN || !CLIENT_ID || !GUILD_ID) {
   );
 }
 
-// ================= CLIENTE DISCORD =================
+// ================= CLIENTE =================
 
 const client = new Client({
   intents: [
@@ -90,7 +87,7 @@ const client = new Client({
   ]
 });
 
-// ================= SERVIDOR HTTP =================
+// ================= SERVIDOR WEB RENDER =================
 
 const app = express();
 
@@ -110,7 +107,7 @@ app.listen(process.env.PORT || 3000, "0.0.0.0", () => {
 });
 
 // ================= PAINEL ORIGINAL =================
-// Mantido sem alterações no conteúdo e no visual.
+// Não alterar o visual do painel.
 
 function createPanelEmbed() {
   return new EmbedBuilder()
@@ -167,15 +164,13 @@ function createPanelButtons() {
   );
 }
 
-// ================= COMANDO /PAINEL =================
+// ================= COMANDO =================
 
 const commands = [
   new SlashCommandBuilder()
     .setName("painel")
     .setDescription("Publica o painel de atendimento da Red Jhon.")
-    .setDefaultMemberPermissions(
-      PermissionFlagsBits.Administrator
-    )
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .toJSON()
 ];
 
@@ -222,11 +217,19 @@ client.on(Events.GuildMemberAdd, async (member) => {
   await channel.send({ embeds: [embed] }).catch(console.error);
 });
 
-// ================= PERMISSÕES DA EQUIPE =================
+// ================= PERMISSÕES =================
 
 function isAuthorized(member) {
   return STAFF_ROLE_IDS.some((roleId) =>
     member?.roles?.cache?.has(roleId)
+  );
+}
+
+function isTicket(channel) {
+  return (
+    channel?.type === ChannelType.GuildText &&
+    typeof channel.topic === "string" &&
+    channel.topic.startsWith("ticket:")
   );
 }
 
@@ -236,7 +239,7 @@ async function createTranscript(channel) {
   const messages = [];
   let before;
 
-  // Busca até 5.000 mensagens, em lotes de 100.
+  // Lê até 5.000 mensagens em lotes de 100.
   for (let page = 0; page < 50; page++) {
     const batch = await channel.messages.fetch({
       limit: 100,
@@ -261,7 +264,7 @@ async function createTranscript(channel) {
     const content = message.content || "[Mensagem sem texto]";
 
     const attachments = [...message.attachments.values()]
-      .map((file) => file.url)
+      .map((file) => `Anexo: ${file.url}`)
       .join("\n");
 
     const embeds = message.embeds.length
@@ -296,7 +299,8 @@ async function createTranscript(channel) {
 
 client.on(Events.InteractionCreate, async (interaction) => {
   try {
-    // Publicar o painel original
+    // ---------- COMANDO /PAINEL ----------
+
     if (
       interaction.isChatInputCommand() &&
       interaction.commandName === "painel"
@@ -314,8 +318,48 @@ client.on(Events.InteractionCreate, async (interaction) => {
       return;
     }
 
-    // ================= FORMULÁRIO DE RENOMEAÇÃO =================
-    // Este bloco vem antes do filtro de botões para aceitar modais.
+    // ---------- ABRIR FORMULÁRIO DE RENOMEAÇÃO ----------
+    // Deve ficar antes da lógica de criação de tickets.
+
+    if (
+      interaction.isButton() &&
+      interaction.customId === "renomear_ticket"
+    ) {
+      if (!isAuthorized(interaction.member)) {
+        return interaction.reply({
+          content: "Somente a equipe autorizada pode renomear tickets.",
+          ephemeral: true
+        });
+      }
+
+      if (!isTicket(interaction.channel)) {
+        return interaction.reply({
+          content: "Este canal não é um ticket válido.",
+          ephemeral: true
+        });
+      }
+
+      const modal = new ModalBuilder()
+        .setCustomId("modal_renomear_ticket")
+        .setTitle("Renomear ticket");
+
+      const nome = new TextInputBuilder()
+        .setCustomId("novo_nome")
+        .setLabel("Novo nome do canal")
+        .setPlaceholder("Ex.: compra-kauan")
+        .setStyle(TextInputStyle.Short)
+        .setMinLength(3)
+        .setMaxLength(90)
+        .setRequired(true);
+
+      modal.addComponents(
+        new ActionRowBuilder().addComponents(nome)
+      );
+
+      return interaction.showModal(modal);
+    }
+
+    // ---------- RECEBER O FORMULÁRIO ----------
 
     if (
       interaction.isModalSubmit() &&
@@ -330,10 +374,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       const channel = interaction.channel;
 
-      if (
-        channel?.type !== ChannelType.GuildText ||
-        !channel.topic?.startsWith("ticket:")
-      ) {
+      if (!isTicket(channel)) {
         return interaction.reply({
           content: "Este canal não é um ticket válido.",
           ephemeral: true
@@ -359,27 +400,32 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       await interaction.deferReply({ ephemeral: true });
 
-      await channel.setName(
-        novoNome,
-        `Ticket renomeado por ${interaction.user.tag}`
-      );
+      try {
+        await channel.setName(
+          novoNome,
+          `Ticket renomeado por ${interaction.user.tag}`
+        );
 
-      return interaction.editReply(
-        `✏️ Ticket renomeado para **${novoNome}**.`
-      );
+        return interaction.editReply(
+          `✅ Canal renomeado para **#${novoNome}**.`
+        );
+      } catch (error) {
+        console.error("Erro ao renomear canal:", error);
+
+        return interaction.editReply(
+          "Não consegui renomear. Confere se o bot tem a permissão Gerenciar Canais."
+        );
+      }
     }
 
     if (!interaction.isButton()) return;
 
-    // ================= CRIAR TICKET =================
+    // ---------- CRIAR TICKET ----------
 
     if (interaction.customId.startsWith("ticket_")) {
       await interaction.deferReply({ ephemeral: true });
 
-      const categoryKey = interaction.customId.slice(
-        "ticket_".length
-      );
-
+      const categoryKey = interaction.customId.slice("ticket_".length);
       const category = CATEGORIES[categoryKey];
 
       if (!category) {
@@ -490,7 +536,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         })
         .setTimestamp();
 
-      // NOVOS BOTÕES: RESOLVIDO PRIMEIRO, RENOMEAR SEGUNDO
+      // Resolvido primeiro; renomear segundo.
       const ticketButtons = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId("ticket_resolvido")
@@ -519,24 +565,19 @@ client.on(Events.InteractionCreate, async (interaction) => {
       );
     }
 
-    // ================= RESOLVER TICKET =================
+    // ---------- RESOLVER E FECHAR TICKET ----------
 
     if (interaction.customId === "ticket_resolvido") {
       if (!isAuthorized(interaction.member)) {
         return interaction.reply({
-          content:
-            "Somente os cargos autorizados podem resolver tickets.",
+          content: "Somente os cargos autorizados podem resolver tickets.",
           ephemeral: true
         });
       }
 
       const channel = interaction.channel;
-      const topic = channel?.topic || "";
 
-      if (
-        channel?.type !== ChannelType.GuildText ||
-        !topic.startsWith("ticket:")
-      ) {
+      if (!isTicket(channel)) {
         return interaction.reply({
           content: "Este canal não é um ticket válido.",
           ephemeral: true
@@ -555,9 +596,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
         );
       }
 
-      const ownerId = topic.slice("ticket:".length);
+      const ownerId = channel.topic.slice("ticket:".length);
 
-      // Transcript gerado antes de excluir o canal.
       const { messages, buffer } = await createTranscript(channel);
 
       const attachment = new AttachmentBuilder(buffer, {
@@ -574,7 +614,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
             `**Resolvido por:** ${interaction.user}`,
             `**Mensagens registradas:** ${messages.length}`,
             "",
-            "O transcript completo está anexado a esta mensagem."
+            "O transcript completo está anexado para download."
           ].join("\n")
         )
         .setFooter({
@@ -588,7 +628,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       });
 
       await interaction.editReply(
-        "✅ Ticket resolvido! O transcript foi enviado aos logs. O canal será excluído em 5 segundos."
+        "✅ Ticket resolvido! Transcript enviado aos logs. O canal será excluído em 5 segundos."
       );
 
       setTimeout(async () => {
