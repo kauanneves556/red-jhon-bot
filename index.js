@@ -5,7 +5,6 @@ const {
   EmbedBuilder,
   REST,
   Routes,
-  SlashCommandBuilder,
   ChannelType,
   PermissionFlagsBits,
   ActionRowBuilder,
@@ -187,7 +186,17 @@ function createPurchasePanelEmbed() {
         "",
         "🔒 O atendimento é privado. Envie as informações necessárias por lá e aguarde nossa equipe responder.",
         "",
-        "💜 **Red Jhon Otimizações — atendimento direto, atenção ao seu PC e orientação personalizada.**"
+        "💜 **Red Jhon Otimizações — atendimento direto, atenção ao seu PC e orientação personalizada.**",
+        "",
+        "━━━━━━━━━━━━━━━━━━━━",
+        "",
+        "💻 **PLANOS DE OTIMIZAÇÃO**",
+        "",
+        "🟢 **Basic — R$ 10,00**",
+        "🔵 **Mediana — R$ 20,00**",
+        "🟣 **Elite — R$ 35,00**",
+        "",
+        "📩 Abra um ticket para tirar dúvidas e escolher o plano ideal para seu PC."
       ].join("\n")
     )
     .setImage(PURCHASE_IMAGE_URL)
@@ -207,27 +216,47 @@ function createPurchasePanelButtons() {
   );
 }
 
-// ================ COMANDOS ================
+// ================ COMANDOS COM PREFIXO ================
+// Use !painel e !painel12. Apenas administradores podem publicar os painéis.
 
-const commands = [
-  new SlashCommandBuilder()
-    .setName("painel")
-    .setDescription("Publica o painel de atendimento da Red Jhon.")
-    .setDefaultMemberPermissions(
-      PermissionFlagsBits.Administrator
-    )
-    .toJSON(),
+client.on(Events.MessageCreate, async (message) => {
+  if (message.author.bot || !message.guild) return;
 
-  new SlashCommandBuilder()
-    .setName("painel12")
-    .setDescription("Publica o painel de compra da Red Jhon.")
-    .setDefaultMemberPermissions(
-      PermissionFlagsBits.Administrator
-    )
-    .toJSON()
-];
+  const command = message.content.trim().toLowerCase();
+  if (command !== "!painel" && command !== "!painel12") return;
+
+  if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
+    await message.reply("❌ Apenas administradores podem usar esse comando.")
+      .catch(console.error);
+    return;
+  }
+
+  try {
+    if (command === "!painel") {
+      await message.channel.send({
+        embeds: [createPanelEmbed()],
+        components: [createPanelButtons()]
+      });
+      await message.reply("✅ Painel de suporte publicado!")
+        .catch(console.error);
+      return;
+    }
+
+    await message.channel.send({
+      embeds: [createPurchasePanelEmbed()],
+      components: [createPurchasePanelButtons()]
+    });
+    await message.reply("✅ Painel de compra publicado!")
+      .catch(console.error);
+  } catch (error) {
+    console.error("Erro ao publicar painel:", error);
+    await message.reply("❌ Não consegui publicar o painel. Verifica as permissões do bot.")
+      .catch(() => {});
+  }
+});
 
 // ================ INICIALIZAÇÃO ================
+// Remove os comandos de barra antigos deste servidor para usar apenas os comandos com !.
 
 client.once(Events.ClientReady, async (bot) => {
   console.log(`Red Jhon conectado como ${bot.user.tag}`);
@@ -237,12 +266,11 @@ client.once(Events.ClientReady, async (bot) => {
   try {
     await rest.put(
       Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
-      { body: commands }
+      { body: [] }
     );
-
-    console.log("Comandos /painel e /painel12 registrados!");
+    console.log("Comandos de barra antigos removidos. Use !painel e !painel12.");
   } catch (error) {
-    console.error("Erro ao registrar comandos:", error);
+    console.error("Erro ao remover comandos de barra antigos:", error);
   }
 });
 
@@ -261,7 +289,22 @@ client.on(Events.GuildMemberAdd, async (member) => {
     .setColor(PURPLE)
     .setTitle("Bem-vindo à Red Jhon!")
     .setDescription(
-      `Salve, ${member}! Seja bem-vindo à **Red Jhon Otimizações**!`
+      [
+        `Salve, ${member}! Seja bem-vindo à **Red Jhon Otimizações**!`,
+        "",
+        "🚀 Aqui é o lugar certo para quem busca mais desempenho, mais FPS e menos travamentos!",
+        "",
+        "<:1563238014401118361:1567331646871699516> Conheça nossos serviços de otimização de PC, configurações personalizadas, suporte e muito mais.",
+        "",
+        "🎁 Aproveite também nosso pack com mais de 1.000 wallpapers gratuitos!",
+        "",
+        "📩 Precisa de ajuda ou quer melhorar seu PC? Abra um ticket e fale com nossa equipe.",
+        "",
+        "🔥 Sinta-se à vontade, explore o servidor e faça parte da nossa comunidade!",
+        "",
+        "**RED JHON OTIMIZAÇÕES**",
+        "Mais desempenho. Menos travamentos. Mais gameplay."
+      ].join("\\n")
     )
     .setThumbnail(member.user.displayAvatarURL())
     .setFooter({
