@@ -1,0 +1,13 @@
+
+{
+  "name": "red-jhon-bot",
+  "version": "1.0.0",
+  "description": "Bot da Red Jhon Otimizações",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.19.3"
+  }
+}
