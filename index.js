@@ -65,6 +65,11 @@ const CATEGORIES = {
     label: "Outros assuntos",
     description: "Preciso de ajuda com outro assunto.",
     channelPrefix: "outros"
+  },
+  wallpapers: {
+    label: "Comprar pack de wallpapers",
+    description: "Quero comprar o pack com quase 1.000 wallpapers por R$ 5,00.",
+    channelPrefix: "wallpapers"
   }
 };
 
@@ -240,14 +245,62 @@ function createPurchasePanelButtons() {
   );
 }
 
+// ================ PAINEL 5 - WALLPAPERS ================
+
+function createWallpaperPanelEmbed() {
+  return new EmbedBuilder()
+    .setColor(PURPLE)
+    .setTitle("🖼️ PACK DE WALLPAPERS")
+    .setDescription(
+      [
+        "✨ **Deixe seu celular ou computador com a sua cara!**",
+        "",
+        "Tenha acesso a um pack com **quase 1.000 wallpapers** em alta variedade de estilos, para personalizar seus dispositivos do seu jeito.",
+        "",
+        "🎨 **ESTILOS INCLUÍDOS**",
+        "",
+        "🤍 Clean e minimalista",
+        "👩 Feminino / mulheres",
+        "🎌 Anime",
+        "🚗 Carros e automobilismo",
+        "🌅 Paisagens e lugares",
+        "🌿 Natureza",
+        "🎮 Gamer e jogos",
+        "💻 Tecnologia",
+        "🌀 Abstratos e artísticos",
+        "✨ E vários outros estilos!",
+        "",
+        "💰 **VALOR: R$ 5,00**",
+        "",
+        "📩 Clique no botão **Comprar** para abrir um atendimento privado com nossa equipe e adquirir seu pack.",
+        "",
+        "💜 **Red Jhon Otimizações — personalização do seu jeito!**"
+      ].join("\n")
+    )
+    .setFooter({
+      text: "Red Jhon Otimizações • Pack de Wallpapers"
+    })
+    .setTimestamp();
+}
+
+function createWallpaperPanelButtons() {
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId("ticket_wallpapers")
+      .setLabel("Comprar")
+      .setStyle(ButtonStyle.Secondary)
+      .setEmoji(EMOJIS.comprar)
+  );
+}
+
 // ================ COMANDOS COM PREFIXO ================
-// Use !painel e !painel12. Apenas administradores podem publicar os painéis.
+// Use !painel, !painel12 e !painel5. Apenas administradores podem publicar os painéis.
 
 client.on(Events.MessageCreate, async (message) => {
   if (message.author.bot || !message.guild) return;
 
   const command = message.content.trim().toLowerCase();
-  if (command !== "!painel" && command !== "!painel12" && command !== "!pix") return;
+  if (command !== "!painel" && command !== "!painel12" && command !== "!painel5" && command !== "!pix") return;
 
   if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
     await message.reply("❌ Apenas administradores podem usar esse comando.")
@@ -272,6 +325,16 @@ client.on(Events.MessageCreate, async (message) => {
         components: [createPurchasePanelButtons()]
       });
       await message.reply("✅ Painel de compra publicado!")
+        .catch(console.error);
+      return;
+    }
+
+    if (command === "!painel5") {
+      await message.channel.send({
+        embeds: [createWallpaperPanelEmbed()],
+        components: [createWallpaperPanelButtons()]
+      });
+      await message.reply("✅ Painel de wallpapers publicado!")
         .catch(console.error);
       return;
     }
@@ -301,7 +364,7 @@ client.once(Events.ClientReady, async (bot) => {
       Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
       { body: [] }
     );
-    console.log("Comandos de barra antigos removidos. Use !painel e !painel12.");
+    console.log("Comandos de barra antigos removidos. Use !painel, !painel12, !painel5 e !pix.");
   } catch (error) {
     console.error("Erro ao remover comandos de barra antigos:", error);
   }
@@ -659,6 +722,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     if (
       interaction.customId === "ticket_comprar" ||
+      interaction.customId === "ticket_wallpapers" ||
       interaction.customId === "ticket_duvida" ||
       interaction.customId === "ticket_outros"
     ) {
