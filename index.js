@@ -168,6 +168,34 @@ function createPanelButtons() {
 const PURCHASE_IMAGE_URL =
   "https://cdn.discordapp.com/attachments/1567292471673618645/1567383080807825468/Gato_Neon_e_Marca_Red_Jhon.png";
 
+// ================ PAGAMENTO PIX ================
+
+const PIX_KEY = "63a9a136-7316-473e-a1e6-872143a3a13b";
+const PIX_HOLDER = "Yago Antônio Dos Santos Monteiro";
+const PIX_QR_IMAGE_URL =
+  "https://media.discordapp.net/attachments/1567338899116658831/1567696171860754554/image.png?ex=6aed1e55&is=6aebccd5&hm=8f8470c53e45559feeb1d5163127e53d8505ad9eb862b45a4221f52f6d09122c&=&format=webp&quality=lossless&width=205&height=208";
+
+function createPixEmbed() {
+  return new EmbedBuilder()
+    .setColor(PURPLE)
+    .setTitle("💠 PAGAMENTO VIA PIX")
+    .setDescription(
+      [
+        "Faça o pagamento utilizando o QR Code ou a chave Pix abaixo.",
+        "",
+        `**Chave Pix:** \`${PIX_KEY}\``,
+        `**Titular:** ${PIX_HOLDER}`,
+        "",
+        "📸 Após realizar o pagamento, envie uma foto do comprovante neste atendimento para nossa equipe conferir.",
+        "",
+        "💜 **Red Jhon Otimizações**"
+      ].join("\n")
+    )
+    .setImage(PIX_QR_IMAGE_URL)
+    .setFooter({ text: "Red Jhon Otimizações • Pagamento" })
+    .setTimestamp();
+}
+
 function createPurchasePanelEmbed() {
   return new EmbedBuilder()
     .setColor(PURPLE)
@@ -188,15 +216,11 @@ function createPurchasePanelEmbed() {
         "",
         "💜 **Red Jhon Otimizações — atendimento direto, atenção ao seu PC e orientação personalizada.**",
         "",
-        "━━━━━━━━━━━━━━━━━━━━",
+        "⚙️ **OTIMIZAÇÃO**",
         "",
-        "💻 **PLANOS DE OTIMIZAÇÃO**",
+        "<:02d394e8907c44b8b1b6ed61b98ce65:1567373285350707391> **R$ 35,00**",
         "",
-        "🟢 **Basic — R$ 10,00**",
-        "🔵 **Mediana — R$ 20,00**",
-        "🟣 **Elite — R$ 35,00**",
-        "",
-        "📩 Abra um ticket para tirar dúvidas e escolher o plano ideal para seu PC."
+        "📩 Abra um ticket para contratar sua otimização."
       ].join("\n")
     )
     .setImage(PURCHASE_IMAGE_URL)
@@ -223,7 +247,7 @@ client.on(Events.MessageCreate, async (message) => {
   if (message.author.bot || !message.guild) return;
 
   const command = message.content.trim().toLowerCase();
-  if (command !== "!painel" && command !== "!painel12") return;
+  if (command !== "!painel" && command !== "!painel12" && command !== "!pix") return;
 
   if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
     await message.reply("❌ Apenas administradores podem usar esse comando.")
@@ -242,11 +266,20 @@ client.on(Events.MessageCreate, async (message) => {
       return;
     }
 
+    if (command === "!painel12") {
+      await message.channel.send({
+        embeds: [createPurchasePanelEmbed()],
+        components: [createPurchasePanelButtons()]
+      });
+      await message.reply("✅ Painel de compra publicado!")
+        .catch(console.error);
+      return;
+    }
+
     await message.channel.send({
-      embeds: [createPurchasePanelEmbed()],
-      components: [createPurchasePanelButtons()]
+      embeds: [createPixEmbed()]
     });
-    await message.reply("✅ Painel de compra publicado!")
+    await message.reply("✅ Dados do Pix enviados!")
       .catch(console.error);
   } catch (error) {
     console.error("Erro ao publicar painel:", error);
@@ -295,8 +328,6 @@ client.on(Events.GuildMemberAdd, async (member) => {
         "🚀 Aqui é o lugar certo para quem busca mais desempenho, mais FPS e menos travamentos!",
         "",
         "<:1563238014401118361:1567331646871699516> Conheça nossos serviços de otimização de PC, configurações personalizadas, suporte e muito mais.",
-        "",
-        "🎁 Aproveite também nosso pack com mais de 1.000 wallpapers gratuitos!",
         "",
         "📩 Precisa de ajuda ou quer melhorar seu PC? Abra um ticket e fale com nossa equipe.",
         "",
