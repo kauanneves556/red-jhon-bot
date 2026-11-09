@@ -236,6 +236,37 @@ function createAboutEmbed() {
     .setTimestamp();
 }
 
+// ================ PAINEL !PM - PROMOTORES & RECOMPENSAS ================
+
+function createPromoterEmbed() {
+  return new EmbedBuilder()
+    .setColor(PURPLE)
+    .setTitle("🚀 SISTEMA DE PROMOTORES & RECOMPENSAS")
+    .setDescription(
+      [
+        "Quer ganhar recompensa e dinheiro ajudando o servidor a crescer? Veja como funciona o nosso programa de indicação/vendas:",
+        "",
+        "🥇 **1ª Venda Realizada:**",
+        "➥ Você ganha **1 Otimização VIP Grátis** para o seu próprio PC!",
+        "",
+        "🥈 **2ª Venda Realizada:**",
+        "➥ Você ganha a **Tag/Cargo Exclusivo de Promotor** no servidor + destaque na comunidade!",
+        "",
+        "🥉 **3ª Venda em Diante:**",
+        "➥ Você passa a **receber comissão em dinheiro** por CADA pessoa que trouxer para fazer a otimização!",
+        "",
+        "━━━━━━━━━━━━━━━━━━━━",
+        "",
+        "💡 **Como começar?**",
+        "Basta divulgar o nosso servidor para os seus amigos e conhecidos! Quando alguém fechar uma otimização com a gente, peça para informar que foi você quem indicou.",
+        "",
+        "Dúvidas? Abra um ticket ou chame a administração!"
+      ].join("\n")
+    )
+    .setFooter({ text: "Red Jhon Otimizações • Programa de Promotores" })
+    .setTimestamp();
+}
+
 function createPurchasePanelEmbed() {
   return new EmbedBuilder()
     .setColor(PURPLE)
@@ -329,13 +360,13 @@ function createWallpaperPanelButtons() {
 }
 
 // ================ COMANDOS COM PREFIXO ================
-// Use !painel, !painel12, !painel5, !pix e !sb. Apenas administradores podem usar os comandos.
+// Use !painel, !painel12, !painel5, !pix, !sb e !pm. Apenas administradores podem usar os comandos.
 
 client.on(Events.MessageCreate, async (message) => {
   if (message.author.bot || !message.guild) return;
 
   const command = message.content.trim().toLowerCase();
-  if (command !== "!painel" && command !== "!painel12" && command !== "!painel5" && command !== "!pix" && command !== "!sb") return;
+  if (command !== "!painel" && command !== "!painel12" && command !== "!painel5" && command !== "!pix" && command !== "!sb" && command !== "!pm") return;
 
   if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
     await message.reply("❌ Apenas administradores podem usar esse comando.")
@@ -379,6 +410,15 @@ client.on(Events.MessageCreate, async (message) => {
         embeds: [createAboutEmbed()]
       });
       await message.reply("✅ Painel Sobre Nós publicado!")
+        .catch(console.error);
+      return;
+    }
+
+    if (command === "!pm") {
+      await message.channel.send({
+        embeds: [createPromoterEmbed()]
+      });
+      await message.reply("✅ Painel de Promotores publicado!")
         .catch(console.error);
       return;
     }
