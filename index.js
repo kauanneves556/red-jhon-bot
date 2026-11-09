@@ -201,6 +201,41 @@ function createPixEmbed() {
     .setTimestamp();
 }
 
+// ================ PAINEL !SB - SOBRE NÓS ================
+
+function createAboutEmbed() {
+  return new EmbedBuilder()
+    .setColor(PURPLE)
+    .setTitle("💜 RED JHON OTIMIZAÇÕES | SOBRE NÓS")
+    .setDescription(
+      [
+        "🚀 **Tecnologia, desempenho e soluções para o seu PC!**",
+        "",
+        "A **Red Jhon Otimizações** é focada em ajudar jogadores e usuários a aproveitarem melhor seus computadores, com atendimento dedicado e soluções pensadas para cada necessidade.",
+        "",
+        "⚙️ **OTIMIZAÇÕES PERSONALIZADAS**",
+        "Trabalhamos com ajustes e configurações para buscar mais desempenho, estabilidade e uma experiência mais fluida nos seus jogos e atividades.",
+        "",
+        "🎮 **FOCO EM PERFORMANCE**",
+        "Nosso objetivo é reduzir travamentos desnecessários e aproveitar melhor os recursos disponíveis no seu computador.",
+        "",
+        "🤝 **ATENDIMENTO E SUPORTE**",
+        "Cada computador é diferente. Por isso, buscamos entender sua configuração e orientar você durante o atendimento.",
+        "",
+        "💜 **NOSSO COMPROMISSO**",
+        "Oferecer um serviço transparente, personalizado e com atenção a cada cliente.",
+        "",
+        "**RED JHON OTIMIZAÇÕES**",
+        "Mais desempenho. Menos travamentos. Mais gameplay."
+      ].join("\n")
+    )
+    .setThumbnail(PURCHASE_IMAGE_URL)
+    .setFooter({
+      text: "Red Jhon Otimizações • Sobre nós"
+    })
+    .setTimestamp();
+}
+
 function createPurchasePanelEmbed() {
   return new EmbedBuilder()
     .setColor(PURPLE)
@@ -294,13 +329,13 @@ function createWallpaperPanelButtons() {
 }
 
 // ================ COMANDOS COM PREFIXO ================
-// Use !painel, !painel12 e !painel5. Apenas administradores podem publicar os painéis.
+// Use !painel, !painel12, !painel5, !pix e !sb. Apenas administradores podem usar os comandos.
 
 client.on(Events.MessageCreate, async (message) => {
   if (message.author.bot || !message.guild) return;
 
   const command = message.content.trim().toLowerCase();
-  if (command !== "!painel" && command !== "!painel12" && command !== "!painel5" && command !== "!pix") return;
+  if (command !== "!painel" && command !== "!painel12" && command !== "!painel5" && command !== "!pix" && command !== "!sb") return;
 
   if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
     await message.reply("❌ Apenas administradores podem usar esse comando.")
@@ -339,6 +374,15 @@ client.on(Events.MessageCreate, async (message) => {
       return;
     }
 
+    if (command === "!sb") {
+      await message.channel.send({
+        embeds: [createAboutEmbed()]
+      });
+      await message.reply("✅ Painel Sobre Nós publicado!")
+        .catch(console.error);
+      return;
+    }
+
     await message.channel.send({
       embeds: [createPixEmbed()]
     });
@@ -364,7 +408,7 @@ client.once(Events.ClientReady, async (bot) => {
       Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
       { body: [] }
     );
-    console.log("Comandos de barra antigos removidos. Use !painel, !painel12, !painel5 e !pix.");
+    console.log("Comandos de barra antigos removidos. Use !painel, !painel12, !painel5, !pix e !sb.");
   } catch (error) {
     console.error("Erro ao remover comandos de barra antigos:", error);
   }
