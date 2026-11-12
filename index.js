@@ -74,7 +74,8 @@ const CATEGORIES = {
   bot: {
     label: "Criar bot personalizado",
     description: "Quero criar um bot personalizado para meu servidor. Vou explicar o nome do bot, os comandos que desejo e as funções que preciso.",
-    channelPrefix: "bot"
+    channelPrefix: "bot",
+    parentId: "1559321391071760444"
   }
 };
 
@@ -332,10 +333,11 @@ function createBotPanelEmbed() {
         "🛠️ **FEITO PARA SUA IDEIA**",
         "Descreva as funções que deseja e nossa equipe conversa com você para definir os detalhes.",
         "",
-        "💰 **VALOR: R$ 22,90**",
+        "💰 **VALOR MÍNIMO: R$ 5,00**",
+        "O valor pode subir conforme você for adicionando mais comandos, funções e detalhes ao projeto.",
         "",
         "Clique em **Crie agora** para abrir um ticket privado e começar a montar seu projeto."
-      ].join("\\n")
+      ].join("\n")
     )
     .setThumbnail(PURCHASE_IMAGE_URL)
     .setFooter({
@@ -947,6 +949,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         name: `${category.channelPrefix}-${username}`.slice(0, 100),
         type: ChannelType.GuildText,
         topic: `ticket:${interaction.user.id}`,
+        ...(category.parentId ? { parent: category.parentId } : {}),
         permissionOverwrites: overwrites
       });
 
