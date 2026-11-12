@@ -70,6 +70,11 @@ const CATEGORIES = {
     label: "Comprar pack de wallpapers",
     description: "Quero comprar o pack com quase 1.000 wallpapers por R$ 5,00.",
     channelPrefix: "wallpapers"
+  },
+  bot: {
+    label: "Criar bot personalizado",
+    description: "Quero criar um bot personalizado para meu servidor. Vou explicar o nome do bot, os comandos que desejo e as funções que preciso.",
+    channelPrefix: "bot"
   }
 };
 
@@ -311,6 +316,44 @@ function createPurchasePanelButtons() {
   );
 }
 
+// ================ PAINEL !BOT - BOT PERSONALIZADO ================
+
+function createBotPanelEmbed() {
+  return new EmbedBuilder()
+    .setColor(PURPLE)
+    .setTitle("🤖 CRIE AGORA SEU BOT PERSONALIZADO")
+    .setDescription(
+      [
+        "Tenha um bot feito para o seu servidor, com a sua identidade e as funções que você precisa!",
+        "",
+        "⚙️ **COMANDOS PERSONALIZADOS**",
+        "Você escolhe os comandos e explica o que cada um deve fazer.",
+        "",
+        "🛠️ **FEITO PARA SUA IDEIA**",
+        "Descreva as funções que deseja e nossa equipe conversa com você para definir os detalhes.",
+        "",
+        "💰 **VALOR: R$ 22,90**",
+        "",
+        "Clique em **Crie agora** para abrir um ticket privado e começar a montar seu projeto."
+      ].join("\\n")
+    )
+    .setThumbnail(PURCHASE_IMAGE_URL)
+    .setFooter({
+      text: "Red Jhon Otimizações • Bots personalizados"
+    })
+    .setTimestamp();
+}
+
+function createBotPanelButtons() {
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId("ticket_bot")
+      .setLabel("Crie agora")
+      .setStyle(ButtonStyle.Secondary)
+      .setEmoji(EMOJIS.comprar)
+  );
+}
+
 // ================ PAINEL 5 - WALLPAPERS ================
 
 function createWallpaperPanelEmbed() {
@@ -360,13 +403,13 @@ function createWallpaperPanelButtons() {
 }
 
 // ================ COMANDOS COM PREFIXO ================
-// Use !painel, !painel12, !painel5, !pix, !sb e !pm. Apenas administradores podem usar os comandos.
+// Use !painel, !painel12, !painel5, !pix, !sb, !pm e !bot. Apenas administradores podem usar os comandos.
 
 client.on(Events.MessageCreate, async (message) => {
   if (message.author.bot || !message.guild) return;
 
   const command = message.content.trim().toLowerCase();
-  if (command !== "!painel" && command !== "!painel12" && command !== "!painel5" && command !== "!pix" && command !== "!sb" && command !== "!pm") return;
+  if (command !== "!painel" && command !== "!painel12" && command !== "!painel5" && command !== "!pix" && command !== "!sb" && command !== "!pm" && command !== "!bot") return;
 
   if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
     await message.reply("❌ Apenas administradores podem usar esse comando.")
@@ -419,6 +462,16 @@ client.on(Events.MessageCreate, async (message) => {
         embeds: [createPromoterEmbed()]
       });
       await message.reply("✅ Painel de Promotores publicado!")
+        .catch(console.error);
+      return;
+    }
+
+    if (command === "!bot") {
+      await message.channel.send({
+        embeds: [createBotPanelEmbed()],
+        components: [createBotPanelButtons()]
+      });
+      await message.reply("✅ Painel de bots personalizados publicado!")
         .catch(console.error);
       return;
     }
@@ -807,6 +860,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     if (
       interaction.customId === "ticket_comprar" ||
       interaction.customId === "ticket_wallpapers" ||
+      interaction.customId === "ticket_bot" ||
       interaction.customId === "ticket_duvida" ||
       interaction.customId === "ticket_outros"
     ) {
@@ -930,16 +984,18 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       // BOTÕES DO TICKET
 
+      const isBotTicket = categoryKey === "bot";
+
       const ticketButtons = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId("ticket_resolvido")
-          .setLabel("Resolvido")
+          .setLabel(isBotTicket ? "Fechar" : "Resolvido")
           .setEmoji("✅")
           .setStyle(ButtonStyle.Success),
 
         new ButtonBuilder()
           .setCustomId("renomear_ticket")
-          .setLabel("Renomear ticket")
+          .setLabel(isBotTicket ? "Renomear" : "Renomear ticket")
           .setEmoji("✏️")
           .setStyle(ButtonStyle.Primary)
       );
