@@ -76,6 +76,11 @@ const CATEGORIES = {
     description: "Quero criar um bot personalizado para meu servidor. Vou explicar o nome do bot, os comandos que desejo e as funções que preciso.",
     channelPrefix: "bot",
     parentId: "1559321391071760444"
+  },
+  banco: {
+    label: "Simulador financeiro demonstrativo",
+    description: "Quero adquirir acesso ao simulador financeiro demonstrativo. Entendo que ele usa apenas dados fictícios e não gera comprovantes bancários ou documentos oficiais.",
+    channelPrefix: "b4nco-compra"
   }
 };
 
@@ -356,6 +361,38 @@ function createBotPanelButtons() {
   );
 }
 
+function createBancoPanelEmbed() {
+  return new EmbedBuilder()
+    .setColor(0x820AD1)
+    .setAuthor({ name: "B4NCO FAKE • COMPROVANTE" })
+    .setTitle("💜 B4NCO NU ")
+    .setDescription([
+      "Ferramenta demonstrativa para visualizar e organizar movimentações com **dados fictícios**.",
+      "",
+      "🧾 **AMBIENTE DE TESTES**",
+      "Não é o aplicativo oficial Nubank, gera comprovantes.",
+      "",
+      "📦 **ESTOQUE: 57 unidades**",
+      "💰 **VALOR: R$ 1,50**",
+      "",
+      "Clique no botão abaixo para abrir um atendimento privado."
+    ].join("\\n"))
+    .setFooter({
+      text: "Red Jhon • B4nco NU , Gerad0r d3 compr0v4ntes"
+    })
+    .setTimestamp();
+}
+
+function createBancoPanelButtons() {
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId("ticket_banco")
+      .setLabel("Comprar • R$ 1,50")
+      .setStyle(ButtonStyle.Secondary)
+      .setEmoji(EMOJIS.comprar)
+  );
+}
+
 // ================ PAINEL 5 - WALLPAPERS ================
 
 function createWallpaperPanelEmbed() {
@@ -405,13 +442,13 @@ function createWallpaperPanelButtons() {
 }
 
 // ================ COMANDOS COM PREFIXO ================
-// Use !painel, !painel12, !painel5, !pix, !sb, !pm e !bot. Apenas administradores podem usar os comandos.
+// Use !painel, !painel12, !painel5, !pix, !sb, !pm, !bot e !banco. Apenas administradores podem usar os comandos.
 
 client.on(Events.MessageCreate, async (message) => {
   if (message.author.bot || !message.guild) return;
 
   const command = message.content.trim().toLowerCase();
-  if (command !== "!painel" && command !== "!painel12" && command !== "!painel5" && command !== "!pix" && command !== "!sb" && command !== "!pm" && command !== "!bot") return;
+  if (command !== "!painel" && command !== "!painel12" && command !== "!painel5" && command !== "!pix" && command !== "!sb" && command !== "!pm" && command !== "!bot" && command !== "!banco") return;
 
   if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
     await message.reply("❌ Apenas administradores podem usar esse comando.")
@@ -474,6 +511,16 @@ client.on(Events.MessageCreate, async (message) => {
         components: [createBotPanelButtons()]
       });
       await message.reply("✅ Painel de bots personalizados publicado!")
+        .catch(console.error);
+      return;
+    }
+
+    if (command === "!banco") {
+      await message.channel.send({
+        embeds: [createBancoPanelEmbed()],
+        components: [createBancoPanelButtons()]
+      });
+      await message.reply("✅ Painel do simulador demonstrativo publicado!")
         .catch(console.error);
       return;
     }
@@ -770,6 +817,55 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     if (!interaction.isButton()) return;
 
+    // MARCAR COMPRA COMO VENDIDA (SOMENTE EQUIPE)
+
+    if (interaction.customId === "ticket_banco_vendido") {
+      if (!isAuthorized(interaction.member)) {
+        return interaction.reply({
+          content: "Somente a equipe autorizada pode marcar como vendido.",
+          ephemeral: true
+        });
+      }
+
+      const currentEmbed = interaction.message.embeds[0];
+      if (!currentEmbed) {
+        return interaction.reply({
+          content: "Não encontrei o painel interno deste ticket.",
+          ephemeral: true
+        });
+      }
+
+      const soldEmbed = EmbedBuilder.from(currentEmbed)
+        .setColor(0x2ECC71)
+        .setFooter({ text: `Venda marcada por ${interaction.user.tag}` })
+        .setTimestamp();
+
+      const updatedRow = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId("ticket_banco_vendido")
+          .setLabel("Vendido")
+          .setEmoji("🛍️")
+          .setStyle(ButtonStyle.Success)
+          .setDisabled(true),
+        new ButtonBuilder()
+          .setCustomId("ticket_resolvido")
+          .setLabel("Fechar")
+          .setEmoji("✅")
+          .setStyle(ButtonStyle.Danger),
+        new ButtonBuilder()
+          .setCustomId("renomear_ticket")
+          .setLabel("Renomear")
+          .setEmoji("✏️")
+          .setStyle(ButtonStyle.Primary)
+      );
+
+      await interaction.update({
+        embeds: [soldEmbed],
+        components: [updatedRow]
+      });
+      return;
+    }
+
     // RESOLVER TICKET E ENVIAR TRANSCRIPT
 
     if (interaction.customId === "ticket_resolvido") {
@@ -863,6 +959,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       interaction.customId === "ticket_comprar" ||
       interaction.customId === "ticket_wallpapers" ||
       interaction.customId === "ticket_bot" ||
+      interaction.customId === "ticket_banco" ||
       interaction.customId === "ticket_duvida" ||
       interaction.customId === "ticket_outros"
     ) {
@@ -955,18 +1052,23 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       // EMBED DENTRO DO TICKET
 
+      const isBancoTicket = categoryKey === "banco";
+
       const embed = new EmbedBuilder()
-        .setColor(PURPLE)
-        .setTitle(category.label)
+        .setColor(isBancoTicket ? 0x820AD1 : PURPLE)
+        .setTitle(isBancoTicket ? "🏦 ATENDIMENTO • SIMULADOR DEMONSTRATIVO" : category.label)
         .setDescription(
           [
             `Olá, ${interaction.user}!`,
             "",
             category.description,
             "",
-            "Explique seu pedido nesta conversa.",
+            isBancoTicket
+              ? "Este produto é apenas demonstrativo, usa dados fictícios e não gera comprovantes bancários ou documentos oficiais."
+              : "Explique seu pedido nesta conversa.",
+            "",
             "A equipe da Red Jhon vai te atender assim que possível."
-          ].join("\n")
+          ].join("\\n")
         )
         .addFields(
           {
@@ -990,12 +1092,20 @@ client.on(Events.InteractionCreate, async (interaction) => {
       const isBotTicket = categoryKey === "bot";
 
       const ticketButtons = new ActionRowBuilder().addComponents(
+        ...(isBancoTicket
+          ? [
+              new ButtonBuilder()
+                .setCustomId("ticket_banco_vendido")
+                .setLabel("Vendido")
+                .setEmoji("🛍️")
+                .setStyle(ButtonStyle.Success)
+            ]
+          : []),
         new ButtonBuilder()
           .setCustomId("ticket_resolvido")
-          .setLabel(isBotTicket ? "Fechar" : "Resolvido")
+          .setLabel(isBotTicket || isBancoTicket ? "Fechar" : "Resolvido")
           .setEmoji("✅")
-          .setStyle(ButtonStyle.Success),
-
+          .setStyle(ButtonStyle.Danger),
         new ButtonBuilder()
           .setCustomId("renomear_ticket")
           .setLabel(isBotTicket ? "Renomear" : "Renomear ticket")
